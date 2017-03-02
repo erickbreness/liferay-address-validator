@@ -193,7 +193,7 @@ public class GoogleGeocodingValidator implements AddressValidator {
                             result, XPathConstants.STRING);
                     
                     Address resultAddress = new Address();
-                    resultAddress.setStreet(String.format(STREET_ADDRESS_FORMAT, route, streetNumber));
+                    resultAddress.setStreet(String.format(STREET_ADDRESS_FORMAT, streetNumber, route));
                     resultAddress.setPostalCode(postalCode);
                     resultAddress.setCity(city);
                     resultAddress.setRegion(region);
