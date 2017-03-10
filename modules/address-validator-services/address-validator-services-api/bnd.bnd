@@ -1,0 +1,12 @@
+Bundle-SymbolicName: address.validator.services-api
+Bundle-Version: 1.0.0
+Export-Package: \
+	com.rivetlogic.address.exception,\
+	com.rivetlogic.address.model,\
+	com.rivetlogic.address.service,\
+	com.rivetlogic.address.service.persistence,\
+	com.rivetlogic.address.util,\
+	com.rivetlogic.address.validation,\
+	com.rivetlogic.address.config
+
+-metatype: *
