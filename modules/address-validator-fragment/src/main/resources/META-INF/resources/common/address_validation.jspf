@@ -1,0 +1,186 @@
+<%-- 
+/*
+ * Copyright (C) 2005-present Rivet Logic Corporation.
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 3 of the License.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+--%>
+
+<style media="screen" type="text/css">
+.validate-address-button{
+	width: 30% !important;
+	border-width: 2px !important;
+}
+</style>
+
+<% 
+  String validateButtonPrefix ="validateAddressButton_"; 
+%>
+
+<%-- Button must be an input in order to have appropriate management of indexes --%>
+<aui:input id='<%= validateButtonPrefix + addressesIndex %>' name='<%= validateButtonPrefix + addressesIndex %>' label="" type="button" 
+	value='<%= LanguageUtil.get(request, "addressvalidator.label.validate-address") %>'  cssClass="validate-address-button btn btn-lg btn-default"
+	title='<%= LanguageUtil.get(request, "addressvalidator.label.validate-address") %>'/>
+	
+<aui:script>
+
+AUI.add('addressvalidationutil', function(A){
+    
+    var _popup;
+    
+    A.namespace('addressvalidationutil');
+    
+    _validateInputData = function(addressData){
+    
+    	var valid = true;
+    	var allEmpty = false;       	
+		
+		if (addressData.street1 === "" &&
+			addressData.street2 === "" &&
+			addressData.street3 === "" &&
+			addressData.zip === "" &&
+			addressData.city === "" &&			
+			addressData.country === "0" && 
+			addressData.region === "0"){
+			allEmpty = true;
+		}
+    
+    	if (allEmpty){
+
+    		valid = false;
+    
+    		_popup = Liferay.Util.Window.getWindow(
+                {
+                    dialog: {
+                    	bodyContent: '<liferay-ui:message key="addressvalidator.message.enter-some-data" />',
+                        centered: true,
+                        constrain2view: true,
+                        cssClass: 'address-validator-portlet',
+                        width: 670,
+                        height: 150,
+                        destroyOnHide: true
+                    },
+                    title: '<liferay-ui:message key="addressvalidator.title.address-validation" />',
+                }
+                ).render();
+     	}
+     	
+     	return valid;
+    }
+    
+
+    A.addressvalidationutil.initializesValidateAddressAction = function(event) {
+    
+        var targetName = event.target.attr('id');
+        var buttonPrefix = '<%=validateButtonPrefix%>';
+        var startPos = targetName.indexOf(buttonPrefix)+buttonPrefix.length;
+        var addressIndex = targetName.substring(startPos);
+        
+        var addressStreet1Val = A.one('#<portlet:namespace />addressStreet1_' + addressIndex).val();
+        var addressStreet2Val = A.one('#<portlet:namespace />addressStreet2_' + addressIndex).val();
+        var addressStreet3Val = A.one('#<portlet:namespace />addressStreet3_' + addressIndex).val();
+        var addressCountryVal = A.one('#<portlet:namespace />addressCountryId' + addressIndex).val();
+        var addressRegionVal = A.one('#<portlet:namespace />addressRegionId' + addressIndex).val();
+        var zipVal = A.one('#<portlet:namespace />addressZip' + addressIndex).val();
+        var cityVal = A.one('#<portlet:namespace />addressCity' + addressIndex).val();
+        
+        if (!_validateInputData({   street1: addressStreet1Val,
+        							street2: addressStreet2Val,
+        							street3: addressStreet3Val,
+        							country: addressCountryVal,
+        							region: addressRegionVal,
+        							zip: zipVal,
+        							city: cityVal
+        						})){
+        	return;
+        }
+     
+        var addressValidationURL = Liferay.PortletURL.createRenderURL();
+        addressValidationURL.setPortletId('com_rivetlogic_address_portlet_AddressValidatorPortlet');
+        addressValidationURL.setPortletMode('view');
+        addressValidationURL.setWindowState('exclusive');
+        addressValidationURL.setParameter('street1', addressStreet1Val);
+        addressValidationURL.setParameter('street2', addressStreet2Val);
+        addressValidationURL.setParameter('street3', addressStreet3Val);
+        addressValidationURL.setParameter('addressCountryId', addressCountryVal);
+        addressValidationURL.setParameter('addressRegionId', addressRegionVal);
+        addressValidationURL.setParameter('zip', zipVal);
+        addressValidationURL.setParameter('city', cityVal);
+        addressValidationURL.setParameter('callbackSelection','addressvalidationutil.applyAddressValidation');
+        addressValidationURL.setParameter('targetId',addressIndex);
+        addressValidationURL.setParameter('callbackCancel','addressvalidationutil.cancelAddressValidation');
+        
+        _popup = Liferay.Util.Window.getWindow(
+                {
+                    dialog: {
+                        centered: true,
+                        constrain2view: true,
+                        cssClass: 'address-validator-portlet',
+                        width: 600,
+                        height: 300,
+                        destroyOnHide: true
+                    },
+                    title: '<liferay-ui:message key="addressvalidator.title.address-validation" />',
+                }
+                ).plug(
+                    A.Plugin.IO,
+                    {
+                        uri:addressValidationURL.toString()
+                    }
+                ).render();
+     }
+     
+     A.addressvalidationutil.cancelAddressValidation = function(){
+        _popup.destroy();
+     }
+     
+     A.addressvalidationutil.applyAddressValidation = function(jsonAddress, addressIndex){
+
+        var address = A.JSON.parse(jsonAddress);
+
+        A.one('#<portlet:namespace />addressStreet1_' + addressIndex).val(address.street.length > 1 ? address.street : '-');
+        A.one('#<portlet:namespace />addressStreet2_' + addressIndex).val('');
+        A.one('#<portlet:namespace />addressStreet3_' + addressIndex).val('');
+        A.one('#<portlet:namespace />addressZip' + addressIndex).val(address.postalCode);
+        A.one('#<portlet:namespace />addressCity' + addressIndex).val(address.city);
+        
+        if (address.countryId != undefined){
+        
+	        A.one('#<portlet:namespace />addressCountryId' + addressIndex).val(address.countryId);
+	        A.one('#<portlet:namespace />addressCountryId' + addressIndex).simulate('change');
+	        
+	        if (address.regionId != undefined){
+
+                A.once('dynamic-select-updated', function(args) {
+
+                    A.one('#<portlet:namespace />addressRegionId' + addressIndex).val(address.regionId);
+                    A.one('#<portlet:namespace />addressRegionId' + addressIndex).simulate('change');
+                });
+             }
+
+        }
+
+        _popup.destroy();
+     }
+},
+'',
+{
+    requires: ['liferay-portlet-url', 'liferay-util-window', 'aui-io-plugin-deprecated']
+}
+);
+</aui:script>
+
+<aui:script use ="addressvalidationutil">
+A.one("#<portlet:namespace /><%= validateButtonPrefix + addressesIndex %>").on('click', A.addressvalidationutil.initializesValidateAddressAction);
+</aui:script>

@@ -1,0 +1,4 @@
+Bundle-Name: Address Validator
+Bundle-SymbolicName: address.validator.portlet
+Bundle-Activator: com.rivetlogic.address.activator.AddressValidatorActivator
+Bundle-Version: 1.0.0

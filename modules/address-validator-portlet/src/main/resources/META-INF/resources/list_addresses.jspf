@@ -1,0 +1,75 @@
+<%--
+/**
+ * Copyright (C) 2005-2017 Rivet Logic Corporation.
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; version 3 of the License.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+--%>
+
+<c:set var="idx" value="0" />
+<c:forEach var="address" items="${matchedAddresses}" >
+	<aui:container>
+		   <c:set var="listwidth" value ="12" />
+		   <c:if test="${currentAPI eq googleAPI}">
+		       <c:set var="listwidth" value ="8" />
+		   </c:if>	  
+			<aui:col md="${listwidth}">
+				<aui:input cssClass="${pns}address-option" checked="${false}" id="validatedAddres${idx}" label="${address.fullAddress}" name="validatedAddres" type="radio" value='<%= AddressUtil.addressToJSONObject((Address)pageContext.getAttribute("address")).toString() %>' />
+			</aui:col>
+			<c:if test="${currentAPI eq googleAPI}">
+			<aui:col md="${12-listwidth}">
+				<div class="radio btn btn-sm" >
+				<a href="http://maps.google.com/?q=${address.latitude},${address.longitude}" target="_blank"><liferay-ui:message key="addressvalidator.label.view-map" /></a>
+				</div>
+			</aui:col>
+			</c:if>
+	</aui:container>
+    <c:set var="idx" value="${idx + 1}" />
+</c:forEach>
+
+<br>
+
+<aui:input id="<%=AddressValidatorConstants.PARAMETER_CALLBACK_TARGET_ID%>" name="<%=AddressValidatorConstants.PARAMETER_CALLBACK_TARGET_ID%>" type="hidden" value="${targetId}"/>
+
+<aui:button id="select-address-button" type="button" value="select" />
+<aui:button id="cancel-address-button" type="button" value="cancel" />
+
+<aui:script>
+AUI.add('addressvalidation', function(A){
+
+    A.namespace('addressvalidation');
+    
+    A.addressvalidation.selectAddress = function(event){
+        var addressSelected = A.one('.${pns}address-option:radio:checked')
+        if (addressSelected != null){
+	        var selectedAddressValue = addressSelected.val();
+	        var targetId = A.one('#${pns}<%=AddressValidatorConstants.PARAMETER_CALLBACK_TARGET_ID%>').val();
+	        A.${callbackSelection}(selectedAddressValue, targetId);    
+        }
+    };
+    A.addressvalidation.cancelAddress = function(event){
+        A.${callbackCancel}();        
+    };
+},
+'',
+{
+    requires: ['aui-base']
+}
+);
+</aui:script>
+
+<aui:script use ="addressvalidation">
+A.one("#${pns}select-address-button").on('click', A.addressvalidation.selectAddress);
+A.one("#${pns}cancel-address-button").on('click', A.addressvalidation.cancelAddress);
+</aui:script>
