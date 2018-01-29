@@ -18,10 +18,11 @@
 --%>
 
 <style media="screen" type="text/css">
-.validate-address-button{
-	width: 30% !important;
-	border-width: 2px !important;
-}
+    .validate-address-button {
+        max-width: 160px;
+        border-width: 2px;
+        margin-left: 10px;
+    }
 </style>
 
 <% 
