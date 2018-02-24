@@ -15,7 +15,6 @@ public class CustomLanguageComponent extends ResourceBundle {
 
     @Override
     protected Object handleGetObject(String key) {
-        System.out.println("getting key"+key);
         return bundle.getObject(key);
     }
 
